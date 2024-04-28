@@ -117,7 +117,7 @@ try:
 
 	# generation de la grille
 	grid = []
-	width = height = 65
+	width = height = 50
 	for i in range(height): grid.append([0 for i in range(width)])
 
 	w = h = 0 # coordonnées du curseur
