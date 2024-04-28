@@ -1,9 +1,15 @@
 from os import (
 	name as os_name,
-	system
+	system, mkdir, listdir
+)
+from os.path import exists as file_exists
+from json import (
+	loads as json_decode,
+	dumps as json_encode
 )
 from copy import deepcopy
 from time import sleep
+from msvcrt import getch
 
 # retourne une création de couleur rgb
 def rgb(colors):
@@ -22,18 +28,26 @@ def rgb(colors):
 
 white_bg = rgb((255, 255, 255, "background"))
 black_bg = rgb((0, 0, 0, "background"))
+red_bg = rgb((255, 0, 0, "background"))
 
 # dessine une grille
-def draw_grid(grid, iteration, fps):
+def draw_grid(grid, iteration, fps, cursor = None):
 	global white_bg, black_bg
 	new_grid = deepcopy(grid)
 	res = ""
 
 	for line_index in range(len(grid)):
+		# dessin de chaque cellule
 		for cell_index in range(len(grid[line_index])):
-			# dessin de chaque cellule
-			if (new_grid[line_index][cell_index]): res += white_bg + "  "
-			else: res += black_bg + "  "
+			# cas du curseur
+			if (cursor != None and line_index == cursor["y"] and cell_index == cursor["x"]): col = red_bg
+			# cellule vivante
+			elif (new_grid[line_index][cell_index]): col = white_bg
+			# cellule morte
+			else: col = black_bg
+
+			# dessin cellule
+			res += col + "  "
 
 			# compter le nombre de celulles voisines mortes et vivantes
 			around_cells = 0
@@ -60,8 +74,12 @@ def draw_grid(grid, iteration, fps):
 
 		res += "\n"
 
+	if (iteration != None): output = f"Génération n°{iteration + 1}\n"
+	else: output = f"Tappez <x> pour quitter l'éditeur \n"
+	output += res
+
 	clear()
-	print(f"Itération : {iteration + 1}\n{res}")
+	print(output)
 	sleep(1 / fps)
 	return new_grid
 
@@ -72,22 +90,30 @@ else:
 	clear = lambda: system("clear")
 
 # variables de base
-width = height = 50
-iteration = 3000
+iteration = 1
 fps = 60
 
 # generation de la grille
 grid = []
+width = height = 50
 for i in range(height): grid.append([0 for i in range(width)])
 
-# définition de départ
-grid[15][15] =\
-grid[15][16] =\
-grid[15][17] =\
-grid[14][17] =\
-grid[13][16] =\
-1
+w = h = 0 # coordonnées du curseur
+k = None  # touche
+
+while k != "x":
+	draw_grid(grid, None, fps, {"x": w, "y": h})
+	print(f"x : {w} . y : {h}")
+	k = getch().decode()
+
+	# mapping touches
+	if (k == "d"): w += 1
+	elif (k == "q"): w -= 1
+	elif (k == "z"): h -= 1
+	elif (k == "s"): h += 1
+	elif (k == " "): grid[h][w] = 1
 
 # démarrage de la vie
-for iteration in range(iteration):
+while True:
 	grid = draw_grid(grid, iteration, fps)
+	iteration += 1
