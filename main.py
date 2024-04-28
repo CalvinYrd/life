@@ -7,9 +7,28 @@ from json import (
 	loads as json_decode,
 	dumps as json_encode
 )
+from re import (
+	compile as re_compile,
+	match as re_match,
+	error as re_error
+)
 from copy import deepcopy
 from time import sleep
 from msvcrt import getch
+
+# teste la validité d'un regex
+def regex_match(regex, string):
+	try:
+		re_compile(regex)
+		return re_match(regex, string)
+	except re_error:
+		return False
+
+# teste la validité d'un nom de fichier (syntaxe + existance)
+def filename_is_valid(path):
+	path = path.replace("\\", "/")
+	filename = path.split("/")[-1]
+	return regex_match(r"^[^./\\]+$", filename)
 
 # retourne une création de couleur rgb
 def rgb(colors):
@@ -27,8 +46,10 @@ def rgb(colors):
 		return f'\x1b[{x};2;{colors[0]};{colors[1]};{colors[2]}m'
 
 white_bg = rgb((255, 255, 255, "background"))
+white_color = rgb((255, 255, 255, "color"))
 black_bg = rgb((0, 0, 0, "background"))
 red_bg = rgb((255, 0, 0, "background"))
+red_color = rgb((255, 0, 0, "color"))
 grey_bg = rgb((20, 20, 20, "background"))
 
 # dessine une grille
@@ -75,7 +96,7 @@ def draw_grid(grid, iteration, fps, cursor = None):
 		res += "\n"+grey_bg
 
 	if (iteration != None): output = f"Génération n°{iteration + 1}\n"
-	else: output = f"Tappez <x> pour quitter l'éditeur \n"
+	else: output = f"Tappez <x> pour quitter l'éditeur \nTappez <+> pour sauvegarder le modèle\n"
 	output += res
 
 	clear()
@@ -102,20 +123,47 @@ try:
 	w = h = 0 # coordonnées du curseur
 	k = None  # touche
 
-	while k != "x":
-		draw_grid(grid, None, fps, {"x": w, "y": h})
-		print(f"x : {w} . y : {h}")
-		k = getch().decode()
+	while (k != "x"):
+		try:
+			draw_grid(grid, None, fps, {"x": w, "y": h})
+			print(f"x : {w} . y : {h}")
+			k = getch().decode()
 
-		# mapping touches
-		if (k == "d"): w += 1
-		elif (k == "q"): w -= 1
-		elif (k == "z"): h -= 1
-		elif (k == "s"): h += 1
-		elif (k == " "): grid[h][w] = 1
+			# mapping touches
+			if (k == "d"): w += 1
+			elif (k == "q"): w -= 1
+			elif (k == "z"): h -= 1
+			elif (k == "s"): h += 1
+			elif (k in (" ", "\r")):
+				if (grid[h][w] == 1): grid[h][w] = 0
+				else: grid[h][w] = 1
+			elif (k == "+"):
+				# créer le dossier des sauvegardes s'il n'éxiste pas
+				if (not file_exists("saves")): mkdir("saves")
+				clear()
+				valid = False
+
+				while (not valid):
+					save = input("Saisissez le nom de la sauvegarde :\n> ")
+					save = "saves/"+save+".json"
+
+					# si le nom est valide on créé et remplit la sauvegarde
+					valid = filename_is_valid(save)
+					input(valid)
+
+					if (valid):
+						input(json_encode(grid))
+						# ...
+
+					else:
+						clear()
+						print(f"{red_color}Le nom est invalide ou déjà éxistant{white_color}\n")
+
+		except UnicodeDecodeError:
+			continue
 
 	# démarrage de la vie
-	while True:
+	while (True):
 		grid = draw_grid(grid, iteration, fps)
 		iteration += 1
 
