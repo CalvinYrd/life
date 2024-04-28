@@ -29,10 +29,10 @@ def rgb(colors):
 white_bg = rgb((255, 255, 255, "background"))
 black_bg = rgb((0, 0, 0, "background"))
 red_bg = rgb((255, 0, 0, "background"))
+grey_bg = rgb((20, 20, 20, "background"))
 
 # dessine une grille
 def draw_grid(grid, iteration, fps, cursor = None):
-	global white_bg, black_bg
 	new_grid = deepcopy(grid)
 	res = ""
 
@@ -72,7 +72,7 @@ def draw_grid(grid, iteration, fps, cursor = None):
 			if (grid[line_index][cell_index] == 1 and (around_cells > 3 or around_cells < 2)):
 				new_grid[line_index][cell_index] = 0
 
-		res += "\n"
+		res += "\n"+grey_bg
 
 	if (iteration != None): output = f"Génération n°{iteration + 1}\n"
 	else: output = f"Tappez <x> pour quitter l'éditeur \n"
@@ -89,31 +89,36 @@ if (os_name == "nt"):
 else:
 	clear = lambda: system("clear")
 
-# variables de base
-iteration = 1
-fps = 60
+try:
+	# variables de base
+	iteration = 1
+	fps = 60
 
-# generation de la grille
-grid = []
-width = height = 50
-for i in range(height): grid.append([0 for i in range(width)])
+	# generation de la grille
+	grid = []
+	width = height = 65
+	for i in range(height): grid.append([0 for i in range(width)])
 
-w = h = 0 # coordonnées du curseur
-k = None  # touche
+	w = h = 0 # coordonnées du curseur
+	k = None  # touche
 
-while k != "x":
-	draw_grid(grid, None, fps, {"x": w, "y": h})
-	print(f"x : {w} . y : {h}")
-	k = getch().decode()
+	while k != "x":
+		draw_grid(grid, None, fps, {"x": w, "y": h})
+		print(f"x : {w} . y : {h}")
+		k = getch().decode()
 
-	# mapping touches
-	if (k == "d"): w += 1
-	elif (k == "q"): w -= 1
-	elif (k == "z"): h -= 1
-	elif (k == "s"): h += 1
-	elif (k == " "): grid[h][w] = 1
+		# mapping touches
+		if (k == "d"): w += 1
+		elif (k == "q"): w -= 1
+		elif (k == "z"): h -= 1
+		elif (k == "s"): h += 1
+		elif (k == " "): grid[h][w] = 1
 
-# démarrage de la vie
-while True:
-	grid = draw_grid(grid, iteration, fps)
-	iteration += 1
+	# démarrage de la vie
+	while True:
+		grid = draw_grid(grid, iteration, fps)
+		iteration += 1
+
+except KeyboardInterrupt:
+	print(black_bg)
+	clear()
